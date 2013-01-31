@@ -20,7 +20,6 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Data;
@@ -29,105 +28,108 @@ using System.Xml;
 using System.Text;
 using System.IO;
 using ReportingCloud.Engine;
+using ReportingCloud.Engine.Loader;
 
 namespace ReportingCloud.Designer
 {
 	/// <summary>
-	/// Drillthrough reports; pick report and specify parameters
+	/// Filters specification: used for DataRegions (List, Chart, Table, Matrix), DataSets, group instances
 	/// </summary>
-	internal class DrillParametersDialog : System.Windows.Forms.Form
+	internal class SubreportCtl : System.Windows.Forms.UserControl, IProperty
 	{
-		private string _DrillReport;
+		private DesignXmlDraw _Draw;
+		private XmlNode _Subreport;
 		private DataTable _DataTable;
 		private DataGridTextBoxColumn dgtbName;
 		private DataGridTextBoxColumn dgtbValue;
-		private DataGridTextBoxColumn dgtbOmit;
 		private System.Windows.Forms.DataGridTableStyle dgTableStyle;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Button bFile;
 		private System.Windows.Forms.TextBox tbReportFile;
+		private System.Windows.Forms.TextBox tbNoRows;
+		private System.Windows.Forms.Label label2;
+		private System.Windows.Forms.CheckBox chkMergeTrans;
 		private System.Windows.Forms.DataGrid dgParms;
 		private System.Windows.Forms.Button bRefreshParms;
-		private System.Windows.Forms.Button bOK;
-		private System.Windows.Forms.Button bCancel;
 		/// <summary> 
 		/// Required designer variable.
 		/// </summary>
 		private System.ComponentModel.Container components = null;
 
-        internal DrillParametersDialog(string report, List<DrillParameter> parameters)
+		internal SubreportCtl(DesignXmlDraw dxDraw, XmlNode subReport)
 		{
-			_DrillReport = report;
-			
+			_Draw = dxDraw;
+			_Subreport =subReport;
 			// This call is required by the Windows.Forms Form Designer.
 			InitializeComponent();
 
 			// Initialize form using the style node values
-			InitValues(parameters);
+			InitValues();			
 		}
 
-        private void InitValues(List<DrillParameter> parameters)
+		private void InitValues()
 		{
-			this.tbReportFile.Text = _DrillReport;
+			this.tbReportFile.Text = _Draw.GetElementValue(_Subreport, "ReportName", "");
+			this.tbNoRows.Text = _Draw.GetElementValue(_Subreport, "NoRows", "");
+			this.chkMergeTrans.Checked = _Draw.GetElementValue(_Subreport, "MergeTransactions", "false").ToLower() == "true";
 
 			// Initialize the DataGrid columns
 			dgtbName = new DataGridTextBoxColumn();
 			dgtbValue = new DataGridTextBoxColumn();
-			dgtbOmit = new DataGridTextBoxColumn();
 
 			this.dgTableStyle.GridColumnStyles.AddRange(new DataGridColumnStyle[] {
 															this.dgtbName,
-															this.dgtbValue,
-															this.dgtbOmit});
+															this.dgtbValue});
 			// 
 			// dgtbFE
 			// 
 			dgtbName.HeaderText = "Parameter Name";
 			dgtbName.MappingName = "ParameterName";
 			dgtbName.Width = 75;
+			// Get the parent's dataset name
+//			string dataSetName = _Draw.GetDataSetNameValue(_FilterParent);
+//
+//			string[] fields = _Draw.GetFields(dataSetName, true);
+//			if (fields != null)
+//				dgtbFE.CB.Items.AddRange(fields);
 			// 
 			// dgtbValue
 			// 
 			this.dgtbValue.HeaderText = "Value";
 			this.dgtbValue.MappingName = "Value";
 			this.dgtbValue.Width = 75;
-			// 
-			// dgtbOmit
-			// 
-			this.dgtbOmit.HeaderText = "Omit";
-			this.dgtbOmit.MappingName = "Omit";
-			this.dgtbOmit.Width = 75;
+//			string[] parms = _Draw.GetReportParameters(true);
+//			if (parms != null)
+//				dgtbFV.CB.Items.AddRange(parms);
 
 			// Initialize the DataTable
-			_DataTable = new DataTable();	  
-			
+			_DataTable = new DataTable();
 			_DataTable.Columns.Add(new DataColumn("ParameterName", typeof(string)));
 			_DataTable.Columns.Add(new DataColumn("Value", typeof(string)));
-			_DataTable.Columns.Add(new DataColumn("Omit", typeof(string)));
 
-			string[] rowValues = new string[3];
+			string[] rowValues = new string[2];
+			XmlNode parameters = _Draw.GetNamedChildNode(_Subreport, "Parameters");
 
 			if (parameters != null)
-			foreach (DrillParameter dp in parameters)
+			foreach (XmlNode pNode in parameters.ChildNodes)
 			{
-				rowValues[0] = dp.ParameterName;
-				rowValues[1] = dp.ParameterValue;
-				rowValues[2] = dp.ParameterOmit;
+				if (pNode.NodeType != XmlNodeType.Element || 
+						pNode.Name != "Parameter")
+					continue;
+				rowValues[0] = _Draw.GetElementAttribute(pNode, "Name", "");
+				rowValues[1] = _Draw.GetElementValue(pNode, "Value", "");
 
 				_DataTable.Rows.Add(rowValues);
 			}
-			// Don't allow new rows; do this by creating a DataView over the DataTable
-//			DataView dv = new DataView(_DataTable);	// this has bad side effects
+			// Don't allow users to add their own rows
+//			DataView dv = new DataView(_DataTable);		// bad side effect
 //			dv.AllowNew = false;
 			this.dgParms.DataSource = _DataTable;
 
 			DataGridTableStyle ts = dgParms.TableStyles[0];
-			
 			ts.GridColumnStyles[0].Width = 140;
 			ts.GridColumnStyles[0].ReadOnly = true;
 			ts.GridColumnStyles[1].Width = 140;
-			ts.GridColumnStyles[2].Width = 70;
-
 		}
 
 		/// <summary> 
@@ -152,15 +154,15 @@ namespace ReportingCloud.Designer
 		/// </summary>
 		private void InitializeComponent()
 		{
-			System.Resources.ResourceManager resources = new System.Resources.ResourceManager(typeof(DrillParametersDialog));
 			this.dgParms = new System.Windows.Forms.DataGrid();
 			this.dgTableStyle = new System.Windows.Forms.DataGridTableStyle();
 			this.label1 = new System.Windows.Forms.Label();
 			this.tbReportFile = new System.Windows.Forms.TextBox();
 			this.bFile = new System.Windows.Forms.Button();
+			this.tbNoRows = new System.Windows.Forms.TextBox();
+			this.label2 = new System.Windows.Forms.Label();
+			this.chkMergeTrans = new System.Windows.Forms.CheckBox();
 			this.bRefreshParms = new System.Windows.Forms.Button();
-			this.bOK = new System.Windows.Forms.Button();
-			this.bCancel = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.dgParms)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -169,7 +171,7 @@ namespace ReportingCloud.Designer
 			this.dgParms.CaptionVisible = false;
 			this.dgParms.DataMember = "";
 			this.dgParms.HeaderForeColor = System.Drawing.SystemColors.ControlText;
-			this.dgParms.Location = new System.Drawing.Point(8, 40);
+			this.dgParms.Location = new System.Drawing.Point(8, 112);
 			this.dgParms.Name = "dgParms";
 			this.dgParms.Size = new System.Drawing.Size(384, 168);
 			this.dgParms.TabIndex = 2;
@@ -189,7 +191,7 @@ namespace ReportingCloud.Designer
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(88, 23);
 			this.label1.TabIndex = 3;
-			this.label1.Text = "Report name";
+			this.label1.Text = "Subreport name";
 			// 
 			// tbReportFile
 			// 
@@ -208,104 +210,111 @@ namespace ReportingCloud.Designer
 			this.bFile.Text = "...";
 			this.bFile.Click += new System.EventHandler(this.bFile_Click);
 			// 
+			// tbNoRows
+			// 
+			this.tbNoRows.Location = new System.Drawing.Point(104, 40);
+			this.tbNoRows.Name = "tbNoRows";
+			this.tbNoRows.Size = new System.Drawing.Size(312, 20);
+			this.tbNoRows.TabIndex = 7;
+			this.tbNoRows.Text = "";
+			// 
+			// label2
+			// 
+			this.label2.Location = new System.Drawing.Point(8, 40);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(96, 23);
+			this.label2.TabIndex = 8;
+			this.label2.Text = "No rows message";
+			// 
+			// chkMergeTrans
+			// 
+			this.chkMergeTrans.Location = new System.Drawing.Point(8, 72);
+			this.chkMergeTrans.Name = "chkMergeTrans";
+			this.chkMergeTrans.Size = new System.Drawing.Size(376, 24);
+			this.chkMergeTrans.TabIndex = 9;
+			this.chkMergeTrans.Text = "Use same Data Source connections as parent report when possible";
+			// 
 			// bRefreshParms
 			// 
-			this.bRefreshParms.Location = new System.Drawing.Point(400, 40);
+			this.bRefreshParms.Location = new System.Drawing.Point(392, 120);
 			this.bRefreshParms.Name = "bRefreshParms";
 			this.bRefreshParms.Size = new System.Drawing.Size(56, 23);
 			this.bRefreshParms.TabIndex = 10;
 			this.bRefreshParms.Text = "Refresh";
 			this.bRefreshParms.Click += new System.EventHandler(this.bRefreshParms_Click);
 			// 
-			// bOK
+			// SubreportCtl
 			// 
-			this.bOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-			this.bOK.Location = new System.Drawing.Point(288, 216);
-			this.bOK.Name = "bOK";
-			this.bOK.TabIndex = 11;
-			this.bOK.Text = "OK";
-			this.bOK.Click += new System.EventHandler(this.bOK_Click);
-			// 
-			// bCancel
-			// 
-			this.bCancel.CausesValidation = false;
-			this.bCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-			this.bCancel.Location = new System.Drawing.Point(376, 216);
-			this.bCancel.Name = "bCancel";
-			this.bCancel.TabIndex = 12;
-			this.bCancel.Text = "Cancel";
-			// 
-			// DrillParametersDialog
-			// 
-			this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
-			this.CancelButton = this.bCancel;
-			this.CausesValidation = false;
-			this.ClientSize = new System.Drawing.Size(464, 248);
-			this.ControlBox = false;
-			this.Controls.Add(this.bOK);
-			this.Controls.Add(this.bCancel);
 			this.Controls.Add(this.bRefreshParms);
+			this.Controls.Add(this.chkMergeTrans);
+			this.Controls.Add(this.tbNoRows);
+			this.Controls.Add(this.label2);
 			this.Controls.Add(this.bFile);
 			this.Controls.Add(this.tbReportFile);
 			this.Controls.Add(this.label1);
 			this.Controls.Add(this.dgParms);
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-			this.MaximizeBox = false;
-			this.MinimizeBox = false;
-			this.Name = "DrillParametersDialog";
-			this.ShowInTaskbar = false;
-			this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-			this.Text = "Specify Drillthrough Report and Parameters";
+			this.Name = "SubreportCtl";
+			this.Size = new System.Drawing.Size(464, 304);
 			((System.ComponentModel.ISupportInitialize)(this.dgParms)).EndInit();
 			this.ResumeLayout(false);
 
 		}
 		#endregion
-
-		public string DrillthroughReport
+       
+		public bool IsValid()
 		{
-			get {return this._DrillReport;}
+			if (this.tbReportFile.Text.Length > 0)
+				return true;
+			MessageBox.Show("Subreport file must be specified.", "Subreport");
+			return false;
 		}
 
-        public List<DrillParameter> DrillParameters
+		public void Apply()
 		{
-			get 
-			{
-                List<DrillParameter> parms = new List<DrillParameter>();
+			_Draw.SetElement(_Subreport, "ReportName", this.tbReportFile.Text);
+			if (this.tbNoRows.Text.Trim().Length == 0)
+				_Draw.RemoveElement(_Subreport, "NoRows");
+			else
+				_Draw.SetElement(_Subreport, "NoRows", tbNoRows.Text);
 
-				// Loop thru and add all the filters
-				foreach (DataRow dr in _DataTable.Rows)
-				{
-					if (dr[0] == DBNull.Value || dr[1] == DBNull.Value)
-						continue;
-					string name = (string) dr[0];
-					string val = (string) dr[1];
-					string omit = dr[2] == DBNull.Value? "false": (string) dr[2];
-					if (name.Length <= 0 || val.Length <= 0)
-						continue;
-					DrillParameter dp = new DrillParameter(name, val, omit);
-					parms.Add(dp);
-				}
-				if (parms.Count == 0)
-					return null;
-				return parms;
+			_Draw.SetElement(_Subreport, "MergeTransactions", this.chkMergeTrans.Checked? "true": "false");
+
+			// Remove the old filters
+			XmlNode parms = _Draw.GetCreateNamedChildNode(_Subreport, "Parameters");
+			while (parms.FirstChild != null)
+			{
+				parms.RemoveChild(parms.FirstChild);
 			}
+			// Loop thru and add all the filters
+			foreach (DataRow dr in _DataTable.Rows)
+			{
+				if (dr[0] == DBNull.Value || dr[1] == DBNull.Value)
+					continue;
+				string name = (string) dr[0];
+				string val = (string) dr[1];
+				if (name.Length <= 0 || val.Length <= 0)
+					continue;
+				XmlNode pNode = _Draw.CreateElement(parms, "Parameter", null);
+				_Draw.SetElementAttribute(pNode, "Name", name);
+				_Draw.SetElement(pNode, "Value", val);
+			}
+			if (!parms.HasChildNodes)
+				_Subreport.RemoveChild(parms);
 		}
 
 		private void bFile_Click(object sender, System.EventArgs e)
 		{
-			OpenFileDialog ofd = new OpenFileDialog();
-			ofd.Filter = "Report files (*.rdl)|*.rdl" +
-                "|All files (*.*)|*.*";
-			ofd.FilterIndex = 1;
-			ofd.FileName = "*.rdl";
-
-			ofd.Title = "Specify Report File Name";
-			ofd.DefaultExt = "rdl";
-			ofd.AddExtension = true;
-            try
+            using (OpenFileDialog ofd = new OpenFileDialog())
             {
+                ofd.Filter = "Report files (*.rdl)|*.rdl" +
+                    "|All files (*.*)|*.*";
+                ofd.FilterIndex = 1;
+                ofd.FileName = "*.rdl";
+
+                ofd.Title = "Specify Report File Name";
+                ofd.DefaultExt = "rdl";
+                ofd.AddExtension = true;
+
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     string file = Path.GetFileNameWithoutExtension(ofd.FileName);
@@ -313,65 +322,41 @@ namespace ReportingCloud.Designer
                     tbReportFile.Text = file;
                 }
             }
-            finally
-            {
-                ofd.Dispose();
-            }
 		}
 
 		private void bRefreshParms_Click(object sender, System.EventArgs e)
 		{
 			// Obtain the source
-			Cursor savec = Cursor.Current;
-			Cursor.Current = Cursors.WaitCursor;	// this can take some time
-			try
-			{
-				string filename="";
-				if (tbReportFile.Text.Length > 0)
-					filename = tbReportFile.Text + ".rdl";
+			string filename="";
+			if (tbReportFile.Text.Length > 0)
+				filename = tbReportFile.Text + ".rdl";
 
-				filename = GetFileNameWithPath(filename);
+			string source = this.GetSource(filename);
+			if (source == null)
+				return;						// error: message already displayed
 
-				string source = this.GetSource(filename);
-				if (source == null)
-					return;						// error: message already displayed
-
-				// Compile the report
-				Report report = this.GetReport(source, filename);
-				if (report == null)
-					return;					// error: message already displayed
+			// Compile the report
+			Report report = this.GetReport(source, filename);
+			if (report == null)
+				return;					// error: message already displayed
 			
-				ICollection rps = report.UserReportParameters;
-				string[] rowValues = new string[3];
-				_DataTable.Rows.Clear();
-				foreach (UserReportParameter rp in rps)
-				{
-					rowValues[0] = rp.Name;
-					rowValues[1] = "";
-					rowValues[2] = "false";
-
-					_DataTable.Rows.Add(rowValues);
-				}
-				this.dgParms.Refresh();
-				this.dgParms.Focus();
-			}
-			finally
+			ICollection rps = report.UserReportParameters;
+			string[] rowValues = new string[2];
+			_DataTable.Rows.Clear();
+			foreach (UserReportParameter rp in rps)
 			{
-				Cursor.Current = savec;
-			}
-		}
+				rowValues[0] = rp.Name;
+				rowValues[1] = "";
 
-		private string GetFileNameWithPath(string file)
-		{	// todo: should prefix this with the path of the open file
-			
-			return file;
+				_DataTable.Rows.Add(rowValues);
+			}
+			this.dgParms.Refresh();
 		}
 
 		private string GetSource(string file)
 		{
 			StreamReader fs=null;
 			string prog=null;
-
 			try
 			{
 				fs = new StreamReader(file);
@@ -400,12 +385,10 @@ namespace ReportingCloud.Designer
 				rdlp =  new RDLParser(prog);
 				string folder = Path.GetDirectoryName(file);
 				if (folder == "")
-				{
 					folder = Environment.CurrentDirectory;
-				}
 				rdlp.Folder = folder;
 
-				r = rdlp.Parse();
+				r = rdlp.Parse(new RdlSourceLoader());
 				if (r.ErrorMaxSeverity > 4) 
 				{
 					MessageBox.Show(string.Format("Report {0} has errors and cannot be processed.", "Report"));
@@ -420,52 +403,5 @@ namespace ReportingCloud.Designer
 			return r;
 		}
 
-		private void DrillParametersDialog_Validating(object sender, System.ComponentModel.CancelEventArgs e)
-		{
-			foreach (DataRow dr in _DataTable.Rows)
-			{
-				if (dr[1] == DBNull.Value)
-				{
-					e.Cancel = true;
-					break;
-				}
-				string val = (string) dr[1];
-				if (val.Length <= 0)
-				{
-					e.Cancel = true;
-					break;
-				}
-			}
-			if (e.Cancel)
-			{
-				MessageBox.Show("Value must be specified for every parameter", this.Text);
-			}
-		}
-
-		private void bOK_Click(object sender, System.EventArgs e)
-		{
-			CancelEventArgs ce = new CancelEventArgs();
-			DrillParametersDialog_Validating(this, ce);
-			if (ce.Cancel)
-			{
-				DialogResult = DialogResult.None;
-				return;
-			}
-			DialogResult = DialogResult.OK;
-		}
-
-	}
-	internal class DrillParameter
-	{
-		internal string ParameterName;
-		internal string ParameterValue;
-		internal string ParameterOmit;
-		
-		internal DrillParameter(string name, string pvalue, string omit)
-		{
-			ParameterName = name;
-			ParameterValue = pvalue;
-			ParameterOmit = omit;
-		}
 	}
 }

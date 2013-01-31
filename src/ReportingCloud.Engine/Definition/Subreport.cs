@@ -276,7 +276,7 @@ namespace ReportingCloud.Engine
 				prog = GetRdlSource(name);
 				rdlp =  new RDLParser(prog);
 				rdlp.Folder = folder;
-				r = rdlp.Parse(OwnerReport.GetObjectNumber());
+				r = rdlp.Parse(OwnerReport.GetObjectNumber(),_ReportDefn.SourceLoader);
 				OwnerReport.SetObjectNumber(r.ReportDefinition.GetObjectNumber());
 				if (r.ErrorMaxSeverity > 0) 
 				{
@@ -304,22 +304,7 @@ namespace ReportingCloud.Engine
 
 		private string GetRdlSource(string name)
 		{
-			// TODO: at some point might want to provide interface so that read can be controlled
-			//         by server:  would allow for caching etc.
-			StreamReader fs=null;
-			string prog=null;
-			try
-			{
-				fs = new StreamReader(name);		
-				prog = fs.ReadToEnd();
-			}
-			finally
-			{
-				if (fs != null)
-					fs.Close();
-			}
-
-			return prog;
+		    return _ReportDefn.SourceLoader.GetRdlSource(name);
 		}
 
 		private void SetSubreportParameters(Report rpt, Row row)

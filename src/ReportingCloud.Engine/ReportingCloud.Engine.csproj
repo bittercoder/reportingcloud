@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="itextsharp">
-      <HintPath>C:\Users\Hugo\Desktop\itextsharp.dll</HintPath>
+      <HintPath>..\..\libs\itextsharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -338,7 +338,9 @@
     <Compile Include="Functions\IdentifierKey.cs" />
     <Compile Include="Functions\IExpr.cs" />
     <Compile Include="Functions\VBFunctions.cs" />
+    <Compile Include="Loader\IRdlSourceLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Loader\RdlSourceLoader.cs" />
     <Compile Include="Render\RenderFont.cs" />
     <Compile Include="Render\DelimitedTextWriter.cs" />
     <Compile Include="Render\ExcelValet.cs" />
@@ -378,6 +380,7 @@
     <Compile Include="Runtime\XmlUtil.cs" />
     <Compile Include="Runtime\ZipWrap.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

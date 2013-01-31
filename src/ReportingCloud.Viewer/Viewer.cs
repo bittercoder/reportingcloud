@@ -28,6 +28,7 @@ using System.Windows.Forms;
 using System.Drawing.Printing;
 using System.Text;
 using ReportingCloud.Engine;
+using ReportingCloud.Engine.Loader;
 
 namespace ReportingCloud.Viewer
 {
@@ -1074,7 +1075,7 @@ namespace ReportingCloud.Viewer
 				else
 					rdlp.Folder = this.Folder;
 
-				r = rdlp.Parse();
+				r = rdlp.Parse(new RdlSourceLoader());
 				if (r.ErrorMaxSeverity > 0) 
 				{
 					_errorMsgs = r.ErrorItems;		// keep a copy of the errors

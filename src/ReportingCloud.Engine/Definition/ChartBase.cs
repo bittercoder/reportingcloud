@@ -1062,7 +1062,7 @@ namespace ReportingCloud.Engine
 			for (int i=0; i < SeriesCount; i++)
 			{
 				// TODO: In general all the palettes could use a good going over
-				//   both in terms of the colors in the lists and their order
+				// both in terms of the colors in the lists and their order
                 switch (ChartPalette.GetStyle(ChartDefn.Palette.EvaluateString(rpt, row), defn.rl))
 				{
 					case ChartPaletteEnum.Default:
@@ -1078,14 +1078,12 @@ namespace ReportingCloud.Engine
 					case ChartPaletteEnum.Pastel:
 						b[i] = GetSeriesBrushesPastel(i); break;
 					case ChartPaletteEnum.SemiTransparent:
-						b[i] = GetSeriesBrushesExcel(i); break;	// TODO
-					// 20022008 AJM GJL - New black & white printer friendly palette (NOT TO RDL SPEC BUT REQUIRED!)
+                        b[i] = GetSeriesBrushVibrant(i); break;
                     case ChartPaletteEnum.Patterned:
                         b[i] = GetSeriesBrushesPatterned(i);break;
                     case ChartPaletteEnum.PatternedBlack:
                         b[i] = GetSeriesBrushesPatternedBlack(i); break;
                     case ChartPaletteEnum.Custom:
-
                         b[i] = new SolidBrush(Color.FromName(getColour(rpt, 1, i + 1))); break;
 					default:
 						b[i] = GetSeriesBrushesExcel(i); break;
@@ -1094,6 +1092,66 @@ namespace ReportingCloud.Engine
 
 			return b;
 		}
+        // fyiReporting.RDL.ChartBase
+        private Brush GetSeriesBrushVibrant(int i)
+        {
+            int alpha = 128;
+            Brush result;
+            switch (i % 10)
+            {
+                case 1:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 0, 176, 240));
+                        break;
+                    }
+                case 2:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 255, 153, 51));
+                        break;
+                    }
+                case 3:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 255, 0, 0));
+                        break;
+                    }
+                case 4:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 154, 239, 248));
+                        break;
+                    }
+                case 5:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 0, 112, 192));
+                        break;
+                    }
+                case 6:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 0, 176, 80));
+                        break;
+                    }
+                case 7:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 0, 0, 0));
+                        break;
+                    }
+                case 8:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 163, 29, 32));
+                        break;
+                    }
+                case 9:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 112, 48, 160));
+                        break;
+                    }
+                default:
+                    {
+                        result = new SolidBrush(Color.FromArgb(alpha, 81, 211, 81));
+                        break;
+                    }
+            }
+            return result;
+        }
 
 		Brush GetSeriesBrushesEarthTones(int i)
 		{

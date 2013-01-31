@@ -28,6 +28,7 @@ using System.Globalization;
 using System.Data;
 using System.Data.SqlClient;
 using ReportingCloud.Engine;
+using ReportingCloud.Engine.Loader;
 
 namespace ReportingCloud.Engine
 {
@@ -44,7 +45,8 @@ namespace ReportingCloud.Engine
 	public class ReportDefn				
 	{
 		internal int _ObjectCount=0;	// master object counter
-		internal ReportLog rl;	// report log
+	    readonly IRdlSourceLoader _SourceLoader;
+	    internal ReportLog rl;	// report log
 		Name _Name;				// Name of the report
 		string _Description;	// Description of the report
 		string _Author;			// Author of the report
@@ -99,11 +101,12 @@ namespace ReportingCloud.Engine
 		Type _CodeType;			// used for parsing of expressions; DONT USE AT RUNTIME
 
 		// Constructor
-		internal ReportDefn(XmlNode xNode, ReportLog replog, string folder, NeedPassword getpswd, int objcount)		// report has no parents
+		internal ReportDefn(XmlNode xNode, ReportLog replog, string folder, NeedPassword getpswd, int objcount, IRdlSourceLoader sourceLoader)		// report has no parents
 		{
 			rl = replog;				// used for error reporting
 			_ObjectCount = objcount;	// starting number for objects in this report; 0 other than for subreports
-			GetDataSourceReferencePassword = getpswd;
+		    _SourceLoader = sourceLoader;
+		    GetDataSourceReferencePassword = getpswd;
 			_ParseFolder = folder;
 			_Description = null;
 			_Author = null;		
@@ -795,5 +798,10 @@ namespace ReportingCloud.Engine
 			rl.Reset();
 			return;
 		}
+
+	    internal IRdlSourceLoader SourceLoader
+	    {
+            get { return _SourceLoader; }
+	    }
 	}
 }
