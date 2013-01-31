@@ -732,7 +732,13 @@ namespace ReportingCloud.Engine
 		// Subreport:  
 		public void Subreport(Subreport s, Row r)
 		{
+            tw.Write(@"\par{");
+
+            s.ReportDefn.Run(this);
+
+            tw.Write(@"}");
 		}
+
 		public void GroupingStart(Grouping g)			// called at start of grouping
 		{
 		}
