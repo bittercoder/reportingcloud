@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C# Express 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReportingCloud.Engine", "ReportingCloud.Engine\ReportingCloud.Engine.csproj", "{7D88E717-2328-4977-9218-A2C266117EE9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReportingCloud.Viewer", "ReportingCloud.Viewer\ReportingCloud.Viewer.csproj", "{E6A0B29B-BF6F-4702-A0AF-F03506CE46EA}"
