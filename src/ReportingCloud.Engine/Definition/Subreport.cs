@@ -276,7 +276,7 @@ namespace ReportingCloud.Engine
 				prog = GetRdlSource(name);
 				rdlp =  new RDLParser(prog);
 				rdlp.Folder = folder;
-				r = rdlp.Parse(OwnerReport.GetObjectNumber(),_ReportDefn.SourceLoader);
+                r = rdlp.Parse(OwnerReport.GetObjectNumber(), OwnerReport.SourceLoader);
 				OwnerReport.SetObjectNumber(r.ReportDefinition.GetObjectNumber());
 				if (r.ErrorMaxSeverity > 0) 
 				{
@@ -304,7 +304,7 @@ namespace ReportingCloud.Engine
 
 		private string GetRdlSource(string name)
 		{
-		    return _ReportDefn.SourceLoader.GetRdlSource(name);
+		    return OwnerReport.SourceLoader.GetRdlSource(name);
 		}
 
 		private void SetSubreportParameters(Report rpt, Row row)

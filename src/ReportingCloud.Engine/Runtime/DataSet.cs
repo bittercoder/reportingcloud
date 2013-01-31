@@ -62,5 +62,9 @@ namespace ReportingCloud.Engine
 			_dsd.Query.SetData(_rpt, ie, _dsd.Fields, _dsd.Filters);
 		}
 
+	    public string Name
+	    {
+            get { return _dsd.Name.Nm; }
+	    }
 	}
 }
