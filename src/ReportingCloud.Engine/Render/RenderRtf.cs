@@ -255,6 +255,7 @@ namespace ReportingCloud.Engine
 
 		public void PageHeaderEnd(PageHeader ph)
 		{
+            tw.Write(@"\par\pard");
 		}
 		
 		public void PageFooterStart(PageFooter pf)
@@ -285,10 +286,18 @@ namespace ReportingCloud.Engine
                 DoStyle(tb.Style, row);
                 tw.Write(t);
                 tw.Write("}");
-            }
+                }
             if (bCell)
+            {
                 tw.Write(@"\cell");
-
+            }
+            else
+            {
+                if (t != "")
+                {
+                    tw.Write(@"\par\pard");
+                }
+            }               
 		}
 
         private static bool InTable(ReportItem tb)
@@ -484,26 +493,36 @@ namespace ReportingCloud.Engine
             int pos=0;
 
             int ci=0;
-            foreach (TableColumn tc in t.TableColumns)
-            {
-                pos += tc.Width.Twips;
-                string border=@"\clbrdrt\brdrth\clbrdrl\brdrs\clbrdrb\brdrs\clbrdrr\brdrs";
-                if (ci < tr.TableCells.Items.Count)
-                {
-                    ReportItem ri = tr.TableCells.Items[ci].ReportItems[0];
-                    if (ri.Style != null)
-                    {
-                        StyleInfo si = ri.Style.GetStyleInfo(r, row);
-                        border = string.Format(@"\clbrdrt\{0}\clbrdrl\{1}\clbrdrb\{2}\clbrdrr\{3}",
-                            GetBorderStyle(si.BStyleTop),
-                            GetBorderStyle(si.BStyleLeft),
-                            GetBorderStyle(si.BStyleBottom),
-                            GetBorderStyle(si.BStyleRight));
 
-                    }
-                } 
-                tw.Write(@"{1}\cellx{0}", pos, border);
+		    int columnIndex = 0;
+            
+            for (int i = 0; i < tr.TableCells.Items.Count; i++)
+            {
+                var cell = tr.TableCells.Items[i];
+                
+                for (int offset = 0; offset < cell.ColSpan; offset++)
+                {
+                    var column = t.TableColumns[columnIndex];
+                    pos += column.Width.Twips;
+                }
+
+                string border = @"\clbrdrt\brdrth\clbrdrl\brdrs\clbrdrb\brdrs\clbrdrr\brdrs";
+
+                var style = cell.ReportItems[0].Style;
+                
+                if (style != null)
+                {                    
+                    StyleInfo si = style.GetStyleInfo(r, row);
+                    border = string.Format(@"\clbrdrt\{0}\clbrdrl\{1}\clbrdrb\{2}\clbrdrr\{3}",
+                        GetBorderStyle(si.BStyleTop),
+                        GetBorderStyle(si.BStyleLeft),
+                        GetBorderStyle(si.BStyleBottom),
+                        GetBorderStyle(si.BStyleRight));                    
+                }
+
+                tw.Write(@"{1}\cellx{0}", pos, border);   
             }
+
             tw.Write(@"\pard \intbl");
 		}
 
@@ -554,21 +573,12 @@ namespace ReportingCloud.Engine
 
 		public void TableCellStart(TableCell t, Row row)
 		{
-			if (t.ColSpan > 1)
-			{
-                tw.WriteLine(@"\clmgf");
-			}
+			return;
 		}
 
 		public void TableCellEnd(TableCell t, Row row)
 		{
-			if (t.ColSpan > 1)
-			{
-			    for (int i = 1; i < t.ColSpan; i++)
-			    {
-                    tw.WriteLine(@"\clmrg");
-			    }
-			}
+			return;
 		}
 
         public bool MatrixStart(Matrix m, MatrixCellEntry[,] matrix, Row r, int headerRows, int maxRows, int maxCols)				// called first
@@ -745,11 +755,17 @@ namespace ReportingCloud.Engine
 		// Subreport:  
 		public void Subreport(Subreport s, Row r)
 		{
-		    tw.Write(@"{");
-
+            if (InTable(s))
+            {
+                tw.Write(@"{");
+            }
+            
             s.ReportDefn.Run(this);
 
-            tw.Write(@"}\cell");    
+            if (InTable(s))
+            {
+                tw.Write(@"}\cell");
+            }
 		}
 
 		public void GroupingStart(Grouping g)			// called at start of grouping
