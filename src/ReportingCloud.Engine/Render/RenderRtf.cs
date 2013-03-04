@@ -30,8 +30,8 @@ using System.Globalization;
 using System.Drawing;
 
 namespace ReportingCloud.Engine
-{	
-	///<summary>
+{
+    ///<summary>
 	/// Renders a report to HTML.   This handles some page formating but does not do true page formatting.
 	///</summary>
 	internal class RenderRtf: IPresent
@@ -53,6 +53,7 @@ namespace ReportingCloud.Engine
         int _MatrixCols;
         int _MatrixCellSpan;        // work variable for matrixes
         MatrixCellEntry[,] _MatrixData;
+        int _tableDepth;
 
 		public RenderRtf(Report rep, IStreamGen sg)
 		{
@@ -63,6 +64,7 @@ namespace ReportingCloud.Engine
             _Fonts = new System.Collections.Generic.List<string>();
             _Colors = new System.Collections.Generic.List<Color>();
         }
+
 		~RenderRtf()
 		{
 			// These should already be cleaned up; but in case of an unexpected error 
@@ -416,8 +418,9 @@ namespace ReportingCloud.Engine
 		// Tables					// Report item table
 		public bool TableStart(Table t, Row row)
 		{
+		    _tableDepth++;
+		    if (_tableDepth > 1) return true;
             tw.Write(@"\par{");
- 
 			return true;
 		}
 
@@ -428,8 +431,9 @@ namespace ReportingCloud.Engine
 
 		public void TableEnd(Table t, Row row)
 		{
+		    _tableDepth--;
+            if (_tableDepth != 0) return;
             tw.Write(@"}");
-            return;
 		}
  
 		public void TableBodyStart(Table t, Row row)
@@ -550,12 +554,21 @@ namespace ReportingCloud.Engine
 
 		public void TableCellStart(TableCell t, Row row)
 		{
-			return;
+			if (t.ColSpan > 1)
+			{
+                tw.WriteLine(@"\clmgf");
+			}
 		}
 
 		public void TableCellEnd(TableCell t, Row row)
 		{
-			return;
+			if (t.ColSpan > 1)
+			{
+			    for (int i = 1; i < t.ColSpan; i++)
+			    {
+                    tw.WriteLine(@"\clmrg");
+			    }
+			}
 		}
 
         public bool MatrixStart(Matrix m, MatrixCellEntry[,] matrix, Row r, int headerRows, int maxRows, int maxCols)				// called first
@@ -732,11 +745,11 @@ namespace ReportingCloud.Engine
 		// Subreport:  
 		public void Subreport(Subreport s, Row r)
 		{
-            tw.Write(@"\par{");
+		    tw.Write(@"{");
 
             s.ReportDefn.Run(this);
 
-            tw.Write(@"}");
+            tw.Write(@"}\cell");    
 		}
 
 		public void GroupingStart(Grouping g)			// called at start of grouping

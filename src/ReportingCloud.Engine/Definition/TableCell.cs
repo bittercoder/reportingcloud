@@ -118,7 +118,7 @@ namespace ReportingCloud.Engine
 			if (tc.Visibility != null && tc.Visibility.IsHidden(ip.Report(), row))	// column visible?
 				return;													//  no nothing to do
 
-			ip.TableCellStart(this, row);
+            ip.TableCellStart(this, row);
 			
 			_ReportItems.Items[0].Run(ip, row);
 

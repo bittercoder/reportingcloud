@@ -329,6 +329,11 @@ namespace ReportingCloud.Engine
 			}
 		}
 
+        public bool IsFontItalic()
+        {
+            return FontStyle == FontStyleEnum.Italic;
+        }
+
 		/// <summary>
 		/// Gets the enumerated font weight.
 		/// </summary>
