@@ -73,7 +73,7 @@ namespace ReportingCloud.Engine
                 }
                 catch (Exception ex)
                 {
-                    _ZipError = ex.Message;      // record error for later
+                    _ZipError = ex.ToString();      // record error for later
                 }
             }
         }

@@ -172,7 +172,7 @@ namespace ReportingCloud.Engine
                 if (dir[i] == null)
                     continue;
 
-                string f = dir[i] + file;
+                string f = Path.Combine(dir[i], file);
                 try
                 {
                     ra = Assembly.LoadFrom(f);
